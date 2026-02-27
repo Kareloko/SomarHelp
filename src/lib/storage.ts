@@ -1,8 +1,9 @@
 'use client'
 
-import { StoredProject } from '@/types'
+import { StoredProject, BrandContext } from '@/types'
 
 const STORAGE_KEY = 'somarhelp_projects'
+const BRAND_CONTEXT_KEY = 'somarhelp_brand_context'
 
 export function getProjects(): StoredProject[] {
   if (typeof window === 'undefined') return []
@@ -37,6 +38,21 @@ export function deleteProject(id: string): void {
 
 export function clearAllData(): void {
   localStorage.removeItem(STORAGE_KEY)
+  localStorage.removeItem(BRAND_CONTEXT_KEY)
+}
+
+export function getSavedBrandContext(): BrandContext {
+  if (typeof window === 'undefined') return { productContext: '', specificTopics: '' }
+  try {
+    const data = localStorage.getItem(BRAND_CONTEXT_KEY)
+    return data ? JSON.parse(data) : { productContext: '', specificTopics: '' }
+  } catch {
+    return { productContext: '', specificTopics: '' }
+  }
+}
+
+export function saveBrandContext(context: BrandContext): void {
+  localStorage.setItem(BRAND_CONTEXT_KEY, JSON.stringify(context))
 }
 
 export function getStats() {

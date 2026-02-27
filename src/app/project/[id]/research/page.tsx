@@ -31,7 +31,11 @@ export default function ResearchPage() {
       const res = await fetch('/api/research', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sector: project.sector }),
+        body: JSON.stringify({
+          sector: project.sector,
+          productContext: project.brandContext?.productContext || '',
+          specificTopics: project.brandContext?.specificTopics || '',
+        }),
       })
 
       if (!res.ok) {
@@ -67,6 +71,19 @@ export default function ResearchPage() {
           {research ? 'Reinvestigar' : 'Iniciar Research'}
         </Button>
       </div>
+
+      {project?.brandContext?.productContext && (
+        <Card className="border-amber/10 bg-amber/[0.03]">
+          <p className="text-xs text-text-muted font-sans mb-1">Contexto de marca</p>
+          <p className="text-sm text-text-secondary font-sans leading-relaxed">{project.brandContext.productContext}</p>
+          {project.brandContext.specificTopics && (
+            <>
+              <p className="text-xs text-text-muted font-sans mt-3 mb-1">Temas específicos</p>
+              <p className="text-sm text-text-secondary font-sans">{project.brandContext.specificTopics}</p>
+            </>
+          )}
+        </Card>
+      )}
 
       {error && (
         <Card className="border-alert/30 bg-alert/5">

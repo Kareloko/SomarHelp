@@ -7,12 +7,14 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
 import { StatCard } from '@/components/ui/stat-card'
-import { StoredProject } from '@/types'
-import { getProjects, saveProject, deleteProject, getStats, clearAllData } from '@/lib/storage'
+import { StoredProject, BrandContext } from '@/types'
+import { getProjects, saveProject, deleteProject, getStats, clearAllData, getSavedBrandContext, saveBrandContext } from '@/lib/storage'
 
 export default function HomePage() {
   const router = useRouter()
   const [sector, setSector] = useState('')
+  const [productContext, setProductContext] = useState('')
+  const [specificTopics, setSpecificTopics] = useState('')
   const [projects, setProjects] = useState<StoredProject[]>([])
   const [stats, setStats] = useState({ totalProjects: 0, totalPosts: 0, totalCampaigns: 0, avgFireScore: '—' })
   const [showSettings, setShowSettings] = useState(false)
@@ -20,13 +22,22 @@ export default function HomePage() {
   useEffect(() => {
     setProjects(getProjects())
     setStats(getStats())
+    const saved = getSavedBrandContext()
+    setProductContext(saved.productContext)
+    setSpecificTopics(saved.specificTopics)
   }, [])
 
   const handleCreate = () => {
     if (!sector.trim()) return
+    const brandCtx: BrandContext = {
+      productContext: productContext.trim(),
+      specificTopics: specificTopics.trim(),
+    }
+    saveBrandContext(brandCtx)
     const project: StoredProject = {
       id: nanoid(10),
       sector: sector.trim(),
+      brandContext: brandCtx,
       createdAt: new Date().toISOString(),
       research: null,
       posts: [],
@@ -107,16 +118,43 @@ export default function HomePage() {
             Research, Generación, Evaluación, Campaña y Exportación.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-3 max-w-xl">
-            <Input
-              placeholder="Ej: Ciberseguridad, Fintech, SaaS, Logística..."
-              value={sector}
-              onChange={e => setSector(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handleCreate()}
-            />
-            <Button size="lg" onClick={handleCreate} disabled={!sector.trim()} className="w-full sm:w-auto">
-              Investigar
-            </Button>
+          <div className="space-y-4 max-w-xl">
+            <div>
+              <label className="text-xs text-text-secondary font-sans mb-1.5 block">Sector / Nicho</label>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Input
+                  placeholder="Ej: SaaS Veterinaria, Fintech, Ciberseguridad..."
+                  value={sector}
+                  onChange={e => setSector(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleCreate()}
+                />
+                <Button size="lg" onClick={handleCreate} disabled={!sector.trim()} className="w-full sm:w-auto">
+                  Investigar
+                </Button>
+              </div>
+            </div>
+
+            <div>
+              <label className="text-xs text-text-secondary font-sans mb-1.5 block">Tu producto / contexto de marca</label>
+              <textarea
+                placeholder="Ej: Soy SomarVet, un asistente con IA para clínicas veterinarias. Ayudamos a automatizar la gestión de citas, historiales clínicos y facturación..."
+                value={productContext}
+                onChange={e => setProductContext(e.target.value)}
+                rows={3}
+                className="w-full bg-white/[0.03] border border-border rounded-xl px-4 py-3 text-text placeholder:text-text-muted font-sans text-sm focus:outline-none focus:border-border-active focus:bg-white/[0.05] transition-all duration-200 resize-none"
+              />
+            </div>
+
+            <div>
+              <label className="text-xs text-text-secondary font-sans mb-1.5 block">Temas específicos <span className="text-text-muted">(opcional)</span></label>
+              <textarea
+                placeholder="Ej: IA en veterinaria, automatización de citas, caso de éxito con clínica X..."
+                value={specificTopics}
+                onChange={e => setSpecificTopics(e.target.value)}
+                rows={2}
+                className="w-full bg-white/[0.03] border border-border rounded-xl px-4 py-3 text-text placeholder:text-text-muted font-sans text-sm focus:outline-none focus:border-border-active focus:bg-white/[0.05] transition-all duration-200 resize-none"
+              />
+            </div>
           </div>
         </section>
 

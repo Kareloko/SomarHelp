@@ -4,7 +4,7 @@ import { CAMPAIGN_SYSTEM_PROMPT } from '@/lib/prompts'
 
 export async function POST(req: Request) {
   try {
-    const { sector, research, posts } = await req.json()
+    const { sector, research, posts, productContext } = await req.json()
 
     if (!sector) {
       return Response.json({ error: 'Sector es requerido' }, { status: 400 })
@@ -19,6 +19,10 @@ export async function POST(req: Request) {
       context.push(`Posts ya generados sobre: ${posts.map((p: any) => p.hook).join('; ')}`)
     }
 
+    if (productContext) {
+      context.push(`Contexto de marca: ${productContext}`)
+    }
+
     const { text } = await generateText({
       model: mainModel,
       system: CAMPAIGN_SYSTEM_PROMPT,
@@ -26,7 +30,7 @@ export async function POST(req: Request) {
 
 ${context.length > 0 ? `Contexto del proyecto:\n${context.join('\n')}` : ''}
 
-Genera un calendario editorial semanal (Lunes a Viernes) para LinkedIn, optimizado para engagement B2B en este sector.`,
+Genera un calendario editorial semanal (Lunes a Viernes) para LinkedIn, optimizado para engagement B2B en este sector.${productContext ? ' Los temas deben posicionar naturalmente la marca descrita en el contexto.' : ''}`,
       temperature: 0.7,
     })
 

@@ -40,6 +40,7 @@ export default function CampaignPage() {
           sector: project.sector,
           research: project.research,
           posts: project.posts,
+          productContext: project.brandContext?.productContext || '',
         }),
       })
 

@@ -4,21 +4,27 @@ import { GENERATE_SYSTEM_PROMPT } from '@/lib/prompts'
 
 export async function POST(req: Request) {
   try {
-    const { topic, sector, angle, funnel } = await req.json()
+    const { topic, sector, angle, funnel, productContext } = await req.json()
 
     if (!topic || !sector) {
       return Response.json({ error: 'Topic y sector son requeridos' }, { status: 400 })
     }
 
+    let prompt = `Sector: "${sector}"
+Tema: "${topic}"
+Ángulo sugerido: "${angle || 'libre'}"
+Etapa del funnel: "${funnel || 'MOFU'}"`
+
+    if (productContext) {
+      prompt += `\n\nCONTEXTO DE MARCA:\n${productContext}\n\nLos posts deben mencionar y posicionar naturalmente esta marca/producto. No hagas publicidad directa, pero integra el producto como parte natural de la conversación.`
+    }
+
+    prompt += `\n\nGenera 5 variantes de posts de LinkedIn sobre este tema, cada una con un estilo diferente (contrarian, storytelling, dato-shock, pregunta-abierta, micro-caso).`
+
     const { text } = await generateText({
       model: mainModel,
       system: GENERATE_SYSTEM_PROMPT,
-      prompt: `Sector: "${sector}"
-Tema: "${topic}"
-Ángulo sugerido: "${angle || 'libre'}"
-Etapa del funnel: "${funnel || 'MOFU'}"
-
-Genera 5 variantes de posts de LinkedIn sobre este tema, cada una con un estilo diferente (contrarian, storytelling, dato-shock, pregunta-abierta, micro-caso).`,
+      prompt,
       temperature: 0.8,
     })
 

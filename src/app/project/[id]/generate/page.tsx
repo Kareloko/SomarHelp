@@ -47,6 +47,7 @@ export default function GeneratePage() {
           sector: project.sector,
           angle,
           funnel,
+          productContext: project.brandContext?.productContext || '',
         }),
       })
 

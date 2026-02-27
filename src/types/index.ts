@@ -74,9 +74,15 @@ export interface CampaignData {
   days: CampaignDay[]
 }
 
+export interface BrandContext {
+  productContext: string
+  specificTopics: string
+}
+
 export interface StoredProject {
   id: string
   sector: string
+  brandContext: BrandContext
   createdAt: string
   research: ResearchData | null
   posts: GeneratedPost[]
