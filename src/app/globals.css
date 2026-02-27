@@ -1,0 +1,93 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-bg text-text font-sans antialiased;
+  }
+
+  ::selection {
+    @apply bg-amber/20 text-amber-100;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.12);
+  }
+}
+
+@layer components {
+  .glass {
+    @apply backdrop-blur-[12px] bg-white/[0.03] border border-border;
+  }
+
+  .glass-hover {
+    @apply transition-all duration-300 hover:bg-white/[0.05] hover:border-border-hover;
+  }
+
+  .card-base {
+    @apply bg-bg-card border border-border rounded-xl p-4 md:p-6 transition-all duration-300;
+  }
+
+  .card-interactive {
+    @apply card-base hover:bg-bg-card-hover hover:border-border-hover cursor-pointer;
+  }
+
+  .glow-sphere {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(120px);
+    pointer-events: none;
+  }
+
+  .glow-amber {
+    @apply glow-sphere;
+    background: rgba(232, 162, 48, 0.04);
+  }
+
+  .glow-blue {
+    @apply glow-sphere;
+    background: rgba(37, 99, 235, 0.04);
+  }
+
+  .stat-number {
+    @apply text-2xl md:text-3xl font-extrabold text-amber font-mono;
+  }
+
+  .section-title {
+    @apply text-xl md:text-2xl font-serif text-text tracking-tight;
+  }
+
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium border;
+  }
+
+  /* Post preview LinkedIn-style */
+  .post-preview {
+    @apply text-sm leading-relaxed text-text/90 whitespace-pre-line;
+  }
+
+  .post-preview p:first-child {
+    @apply font-semibold text-text;
+  }
+}
+
+@layer utilities {
+  .stagger-1 { animation-delay: 0ms; }
+  .stagger-2 { animation-delay: 50ms; }
+  .stagger-3 { animation-delay: 100ms; }
+  .stagger-4 { animation-delay: 150ms; }
+  .stagger-5 { animation-delay: 200ms; }
+  .stagger-6 { animation-delay: 250ms; }
+}
