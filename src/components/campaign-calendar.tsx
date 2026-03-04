@@ -18,7 +18,7 @@ export function CampaignCalendar({ days, onGeneratePost, loadingDay }: CampaignC
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 md:gap-4">
       {days.map((day, i) => {
         const style = POST_STYLE_CONFIG[day.style as PostStyle] || FALLBACK_STYLE
-        const funnelClass = FUNNEL_COLORS[day.funnel]
+        const funnelClass = FUNNEL_COLORS[day.funnel] || ''
 
         return (
           <Card key={i} className="flex flex-col gap-3">
@@ -41,7 +41,7 @@ export function CampaignCalendar({ days, onGeneratePost, loadingDay }: CampaignC
             </div>
 
             <div className="flex flex-wrap gap-1">
-              {day.keywords.map(kw => (
+              {(day.keywords || []).map(kw => (
                 <span key={kw} className="text-[10px] text-text-muted bg-white/[0.03] px-1.5 py-0.5 rounded">
                   {kw}
                 </span>
