@@ -7,7 +7,9 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { FireRadar } from '@/components/fire-radar'
-import { StoredProject, GeneratedPost, FireEvaluation, POST_STYLE_CONFIG } from '@/types'
+import { StoredProject, GeneratedPost, FireEvaluation, POST_STYLE_CONFIG, PostStyle } from '@/types'
+
+const FALLBACK_STYLE = { label: 'Post', icon: '📝', description: '' }
 import { getProject, saveProject } from '@/lib/storage'
 
 export default function EvaluatePage() {
@@ -97,14 +99,15 @@ export default function EvaluatePage() {
     { key: 'i' as const, label: 'Interest Hook', color: '#DC2626', description: 'Mantiene leyendo después de la 1ra línea' },
     { key: 'r' as const, label: 'Reaction Trigger', color: '#8B5CF6', description: 'Provoca like, comentario o compartir' },
     { key: 'e' as const, label: 'Engagement Pull', color: '#059669', description: 'Genera conversación real' },
+    { key: 'a' as const, label: 'Authenticity', color: '#3B82F6', description: 'Creíble, honesto, fuentes verificables' },
   ]
 
   return (
     <div className="space-y-12">
       <div>
-        <h1 className="font-serif text-2xl md:text-3xl text-text mb-1 md:mb-2">Evaluar — FIRE Score</h1>
+        <h1 className="font-serif text-2xl md:text-3xl text-text mb-1 md:mb-2">Evaluar — FIRE-A Score</h1>
         <p className="text-text-secondary text-sm md:text-base font-sans">
-          Un crítico de IA evalúa cada post en 4 ejes de rendimiento
+          Un crítico de IA evalúa cada post en 5 ejes de rendimiento y autenticidad
         </p>
       </div>
 
@@ -122,7 +125,7 @@ export default function EvaluatePage() {
             project.posts.map(post => {
               const isSelected = selectedPost?.id === post.id
               const hasEval = project.evaluations.find(e => e.postId === post.id)
-              const style = POST_STYLE_CONFIG[post.style]
+              const style = POST_STYLE_CONFIG[post.style as PostStyle] || FALLBACK_STYLE
 
               return (
                 <Card
@@ -187,7 +190,7 @@ export default function EvaluatePage() {
               </Card>
 
               {/* Score cards */}
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
                 {fireAxes.map(axis => (
                   <Card key={axis.key}>
                     <div className="flex items-center gap-2 mb-1">
@@ -195,7 +198,7 @@ export default function EvaluatePage() {
                       <span className="text-xs font-semibold text-text uppercase">{axis.key.toUpperCase()}</span>
                     </div>
                     <p className="text-2xl font-extrabold font-mono" style={{ color: axis.color }}>
-                      {evaluation.score[axis.key]}
+                      {evaluation.score[axis.key] ?? '—'}
                     </p>
                     <p className="text-[10px] text-text-muted mt-1">{axis.description}</p>
                   </Card>

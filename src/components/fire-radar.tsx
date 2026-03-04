@@ -13,12 +13,13 @@ export function FireRadar({ score, average, size = 220 }: FireRadarProps) {
   const radius = (size / 2) - 30
   const maxScore = 10
 
-  // Axes: F (top), I (right), R (bottom), E (left)
+  // 5 axes evenly spaced at 72° intervals, starting from top (-90°)
   const axes = [
     { key: 'f' as const, label: 'F', fullLabel: 'First Impression', color: '#E8A230', angle: -90 },
-    { key: 'i' as const, label: 'I', fullLabel: 'Interest Hook', color: '#DC2626', angle: 0 },
-    { key: 'r' as const, label: 'R', fullLabel: 'Reaction Trigger', color: '#8B5CF6', angle: 90 },
-    { key: 'e' as const, label: 'E', fullLabel: 'Engagement Pull', color: '#059669', angle: 180 },
+    { key: 'i' as const, label: 'I', fullLabel: 'Interest Hook', color: '#DC2626', angle: -18 },
+    { key: 'r' as const, label: 'R', fullLabel: 'Reaction Trigger', color: '#8B5CF6', angle: 54 },
+    { key: 'e' as const, label: 'E', fullLabel: 'Engagement Pull', color: '#059669', angle: 126 },
+    { key: 'a' as const, label: 'A', fullLabel: 'Authenticity', color: '#3B82F6', angle: 198 },
   ]
 
   const getPoint = (angleDeg: number, value: number) => {
@@ -33,24 +34,32 @@ export function FireRadar({ score, average, size = 220 }: FireRadarProps) {
   // Generate polygon points for the score
   const polygonPoints = axes
     .map(axis => {
-      const point = getPoint(axis.angle, score[axis.key])
+      const val = score[axis.key] ?? 0
+      const point = getPoint(axis.angle, val)
       return `${point.x},${point.y}`
     })
     .join(' ')
 
-  // Generate grid circles
+  // Generate grid pentagons
   const gridLevels = [2.5, 5, 7.5, 10]
+
+  const getGridPolygon = (level: number) => {
+    return axes
+      .map(axis => {
+        const point = getPoint(axis.angle, level)
+        return `${point.x},${point.y}`
+      })
+      .join(' ')
+  }
 
   return (
     <div className="flex flex-col items-center gap-4">
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="drop-shadow-lg">
-        {/* Grid circles */}
+        {/* Grid pentagons */}
         {gridLevels.map(level => (
-          <circle
+          <polygon
             key={level}
-            cx={center}
-            cy={center}
-            r={(level / maxScore) * radius}
+            points={getGridPolygon(level)}
             fill="none"
             stroke="rgba(255,255,255,0.05)"
             strokeWidth="1"
@@ -84,7 +93,8 @@ export function FireRadar({ score, average, size = 220 }: FireRadarProps) {
 
         {/* Score points */}
         {axes.map(axis => {
-          const point = getPoint(axis.angle, score[axis.key])
+          const val = score[axis.key] ?? 0
+          const point = getPoint(axis.angle, val)
           return (
             <circle
               key={`point-${axis.key}`}
@@ -130,10 +140,10 @@ export function FireRadar({ score, average, size = 220 }: FireRadarProps) {
           x={center}
           y={center + 12}
           textAnchor="middle"
-          className="text-[9px] font-sans uppercase tracking-widest"
+          className="text-[8px] font-sans uppercase tracking-widest"
           fill="#8A8A9A"
         >
-          FIRE
+          FIRE-A
         </text>
       </svg>
     </div>

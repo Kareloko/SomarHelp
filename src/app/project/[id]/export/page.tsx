@@ -1,16 +1,19 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { StatCard } from '@/components/ui/stat-card'
 import { Badge } from '@/components/ui/badge'
-import { StoredProject, POST_STYLE_CONFIG } from '@/types'
+import { StoredProject, POST_STYLE_CONFIG, PostStyle } from '@/types'
 import { getProject } from '@/lib/storage'
+
+const FALLBACK_STYLE = { label: 'Post', icon: '📝', description: '' }
 
 export default function ExportPage() {
   const params = useParams()
+  const router = useRouter()
   const projectId = params.id as string
   const [project, setProject] = useState<StoredProject | null>(null)
   const [copied, setCopied] = useState(false)
@@ -78,7 +81,7 @@ export default function ExportPage() {
     if (project.posts.length > 0) {
       md += `## Posts Generados\n\n`
       project.posts.forEach((post, i) => {
-        const style = POST_STYLE_CONFIG[post.style]
+        const style = POST_STYLE_CONFIG[post.style as PostStyle] || FALLBACK_STYLE
         md += `### ${i + 1}. ${style.icon} ${style.label}\n\n`
         md += `${post.content}\n\n`
         md += `Hashtags: ${post.hashtags.join(' ')}\n\n`
@@ -87,12 +90,12 @@ export default function ExportPage() {
     }
 
     if (project.evaluations.length > 0) {
-      md += `## Evaluaciones FIRE\n\n`
+      md += `## Evaluaciones FIRE-A\n\n`
       project.evaluations.forEach(ev => {
         const post = project.posts.find(p => p.id === ev.postId)
-        const style = post ? POST_STYLE_CONFIG[post.style] : null
+        const style = post ? (POST_STYLE_CONFIG[post.style as PostStyle] || FALLBACK_STYLE) : null
         md += `### ${style ? `${style.icon} ${style.label}` : 'Post'} — Score: ${ev.average.toFixed(1)}\n`
-        md += `- F: ${ev.score.f} | I: ${ev.score.i} | R: ${ev.score.r} | E: ${ev.score.e}\n`
+        md += `- F: ${ev.score.f} | I: ${ev.score.i} | R: ${ev.score.r} | E: ${ev.score.e} | A: ${ev.score.a ?? '—'}\n`
         md += `- Veredicto: ${ev.verdict}\n`
         md += `- ${ev.reason}\n\n`
       })
@@ -103,7 +106,7 @@ export default function ExportPage() {
       project.campaign.days.forEach(day => {
         md += `### ${day.day} (${day.date})\n`
         md += `- Tema: ${day.topic}\n`
-        md += `- Estilo: ${POST_STYLE_CONFIG[day.style]?.label}\n`
+        md += `- Estilo: ${(POST_STYLE_CONFIG[day.style as PostStyle] || FALLBACK_STYLE).label}\n`
         md += `- Funnel: ${day.funnel}\n`
         md += `- Brief: ${day.brief}\n\n`
       })
@@ -134,7 +137,7 @@ export default function ExportPage() {
           <StatCard label="Sector" value={project.sector} />
           <StatCard label="Posts generados" value={project.posts.length} />
           <StatCard label="Evaluaciones" value={project.evaluations.length} />
-          <StatCard label="Mejor FIRE" value={bestScore ? bestScore.toFixed(1) : '—'} />
+          <StatCard label="Mejor FIRE-A" value={bestScore ? bestScore.toFixed(1) : '—'} />
         </div>
       </section>
 
@@ -145,10 +148,10 @@ export default function ExportPage() {
           <Card>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
               <div className="flex items-center gap-2">
-                <span>{POST_STYLE_CONFIG[bestPost.style].icon}</span>
-                <Badge variant="amber">{POST_STYLE_CONFIG[bestPost.style].label}</Badge>
+                <span>{(POST_STYLE_CONFIG[bestPost.style as PostStyle] || FALLBACK_STYLE).icon}</span>
+                <Badge variant="amber">{(POST_STYLE_CONFIG[bestPost.style as PostStyle] || FALLBACK_STYLE).label}</Badge>
                 {bestScore && (
-                  <span className="text-xs font-mono text-amber">FIRE {bestScore.toFixed(1)}</span>
+                  <span className="text-xs font-mono text-amber">FIRE-A {bestScore.toFixed(1)}</span>
                 )}
               </div>
               <Button variant="primary" size="sm" onClick={handleCopyBest} className="w-full sm:w-auto">
@@ -178,6 +181,17 @@ export default function ExportPage() {
             Descargar Markdown
           </Button>
         </div>
+      </section>
+
+      {/* New project button */}
+      <section className="animate-fade-up stagger-4 pt-4">
+        <button
+          onClick={() => router.push('/')}
+          className="w-full py-4 px-6 rounded-xl border-2 border-amber/40 bg-transparent text-amber hover:bg-amber/10 hover:border-amber/60 transition-all duration-200 font-sans font-semibold text-lg flex items-center justify-center gap-3"
+        >
+          <span className="text-xl">+</span>
+          Nuevo Proyecto
+        </button>
       </section>
     </div>
   )

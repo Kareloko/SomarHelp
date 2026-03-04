@@ -1,6 +1,8 @@
 'use client'
 
-import { CampaignDay, POST_STYLE_CONFIG, FUNNEL_COLORS } from '@/types'
+import { CampaignDay, POST_STYLE_CONFIG, FUNNEL_COLORS, PostStyle } from '@/types'
+
+const FALLBACK_STYLE = { label: 'Post', icon: '📝', description: '' }
 import { Badge } from './ui/badge'
 import { Button } from './ui/button'
 import { Card } from './ui/card'
@@ -15,7 +17,7 @@ export function CampaignCalendar({ days, onGeneratePost, loadingDay }: CampaignC
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 md:gap-4">
       {days.map((day, i) => {
-        const style = POST_STYLE_CONFIG[day.style]
+        const style = POST_STYLE_CONFIG[day.style as PostStyle] || FALLBACK_STYLE
         const funnelClass = FUNNEL_COLORS[day.funnel]
 
         return (

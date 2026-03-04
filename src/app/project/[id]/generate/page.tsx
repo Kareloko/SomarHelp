@@ -65,6 +65,7 @@ export default function GeneratePage() {
         hashtags: p.hashtags,
         estimatedEngagement: p.estimatedEngagement,
         hook: p.hook,
+        sources: p.sources || [],
       }))
 
       setPosts(generatedPosts)
@@ -85,7 +86,7 @@ export default function GeneratePage() {
 
   const filteredPosts = activeTab === 'all' ? posts : posts.filter(p => p.style === activeTab)
 
-  const styles: (PostStyle | 'all')[] = ['all', 'contrarian', 'storytelling', 'dato-shock', 'pregunta-abierta', 'micro-caso']
+  const styles: (PostStyle | 'all')[] = ['all', 'personal', 'factual', 'opinion', 'pregunta', 'micro-caso']
 
   return (
     <div className="space-y-12">

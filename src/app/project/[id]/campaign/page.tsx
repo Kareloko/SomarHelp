@@ -96,6 +96,7 @@ export default function CampaignPage() {
         hashtags: matchingPost.hashtags,
         estimatedEngagement: matchingPost.estimatedEngagement,
         hook: matchingPost.hook,
+        sources: matchingPost.sources || [],
       }
 
       const updatedDays = [...campaign.days]

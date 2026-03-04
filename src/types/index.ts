@@ -28,7 +28,14 @@ export interface ResearchData {
   opportunities: ContentOpportunity[]
 }
 
-export type PostStyle = 'contrarian' | 'storytelling' | 'dato-shock' | 'pregunta-abierta' | 'micro-caso'
+export type PostStyle = 'personal' | 'factual' | 'opinion' | 'pregunta' | 'micro-caso'
+
+export type SourceType = 'verificable' | 'estimacion' | 'opinion'
+
+export interface PostSource {
+  text: string
+  type: SourceType
+}
 
 export interface GeneratedPost {
   id: string
@@ -38,6 +45,7 @@ export interface GeneratedPost {
   hashtags: string[]
   estimatedEngagement: string
   hook: string
+  sources: PostSource[]
 }
 
 export interface FireScore {
@@ -45,6 +53,7 @@ export interface FireScore {
   i: number // Interest Hook
   r: number // Reaction Trigger
   e: number // Engagement Pull
+  a: number // Authenticity
 }
 
 export interface FireEvaluation {
@@ -93,11 +102,11 @@ export interface StoredProject {
 export type PipelineStep = 'research' | 'generate' | 'evaluate' | 'campaign' | 'export'
 
 export const POST_STYLE_CONFIG: Record<PostStyle, { label: string; icon: string; description: string }> = {
-  'contrarian': { label: 'Contrarian', icon: '⚡', description: 'Posición opuesta al consenso del sector' },
-  'storytelling': { label: 'Storytelling', icon: '📖', description: 'Historia en primera persona, narrativa' },
-  'dato-shock': { label: 'Dato Shock', icon: '📊', description: 'Abre con estadística impactante' },
-  'pregunta-abierta': { label: 'Pregunta Abierta', icon: '❓', description: 'Pregunta que genera debate en comentarios' },
-  'micro-caso': { label: 'Micro-Caso', icon: '🔬', description: 'Mini caso de éxito en 200 palabras' },
+  'personal': { label: 'Personal', icon: '🎯', description: 'Experiencia real del fundador, historia genuina' },
+  'factual': { label: 'Factual', icon: '📊', description: 'Solo datos verificables con fuente citada' },
+  'opinion': { label: 'Opinión', icon: '💡', description: 'Perspectiva provocadora pero honesta del fundador' },
+  'pregunta': { label: 'Pregunta', icon: '❓', description: 'Pregunta que genera debate real, basada en experiencia' },
+  'micro-caso': { label: 'Micro-Caso', icon: '🔬', description: 'Mini caso de éxito real con métricas honestas' },
 }
 
 export const FUNNEL_COLORS: Record<string, string> = {
