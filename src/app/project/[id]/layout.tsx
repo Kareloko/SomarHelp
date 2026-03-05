@@ -22,6 +22,7 @@ export default function ProjectLayout({ children }: { children: React.ReactNode 
   if (project?.posts && project.posts.length > 0) completedSteps.push('generate')
   if (project?.evaluations && project.evaluations.length > 0) completedSteps.push('evaluate')
   if (project?.campaign) completedSteps.push('campaign')
+  if (project?.launches && project.launches.length > 0) completedSteps.push('launch')
 
   return (
     <div className="min-h-screen">

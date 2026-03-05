@@ -88,6 +88,22 @@ export interface BrandContext {
   specificTopics: string
 }
 
+export type AdPlatform = 'facebook' | 'linkedin' | 'instagram'
+export type AdObjective = 'awareness' | 'conversion' | 'retargeting'
+export type AdTone = 'profesional' | 'urgente' | 'storytelling' | 'provocador'
+
+export interface LaunchAd {
+  id: string
+  platform: AdPlatform
+  objective: AdObjective
+  tone: AdTone
+  headline: string
+  copy: string
+  cta: string
+  hashtags: string[]
+  createdAt: string
+}
+
 export interface StoredProject {
   id: string
   sector: string
@@ -97,9 +113,10 @@ export interface StoredProject {
   posts: GeneratedPost[]
   evaluations: FireEvaluation[]
   campaign: CampaignData | null
+  launches?: LaunchAd[]
 }
 
-export type PipelineStep = 'research' | 'generate' | 'evaluate' | 'campaign' | 'export'
+export type PipelineStep = 'research' | 'generate' | 'evaluate' | 'campaign' | 'export' | 'launch'
 
 export const POST_STYLE_CONFIG: Record<PostStyle, { label: string; icon: string; description: string }> = {
   'personal': { label: 'Personal', icon: '🎯', description: 'Experiencia real del fundador, historia genuina' },

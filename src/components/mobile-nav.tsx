@@ -10,6 +10,7 @@ const steps: { key: PipelineStep; label: string; icon: string }[] = [
   { key: 'evaluate', label: 'Evaluar', icon: '🔥' },
   { key: 'campaign', label: 'Campaña', icon: '📅' },
   { key: 'export', label: 'Exportar', icon: '📤' },
+  { key: 'launch', label: 'Launch', icon: '🚀' },
 ]
 
 interface MobileNavProps {
