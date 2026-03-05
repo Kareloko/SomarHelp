@@ -101,6 +101,7 @@ export interface LaunchAd {
   copy: string
   cta: string
   hashtags: string[]
+  psychProfile: string
   createdAt: string
 }
 

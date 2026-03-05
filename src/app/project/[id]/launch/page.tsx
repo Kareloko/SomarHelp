@@ -2,17 +2,17 @@
 
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
+import Link from 'next/link'
 import { nanoid } from 'nanoid'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { StoredProject, LaunchAd, AdPlatform, AdObjective, AdTone } from '@/types'
 import { getProject, saveProject } from '@/lib/storage'
 
-const PLATFORMS: { key: AdPlatform; label: string; icon: string }[] = [
-  { key: 'facebook', label: 'Facebook', icon: '📘' },
-  { key: 'linkedin', label: 'LinkedIn', icon: '💼' },
-  { key: 'instagram', label: 'Instagram', icon: '📸' },
+const PLATFORMS: { key: AdPlatform; label: string; icon: string; color: string }[] = [
+  { key: 'facebook', label: 'Facebook', icon: '📘', color: 'border-[#1877f2] bg-[#1877f2]/10 text-[#1877f2]' },
+  { key: 'linkedin', label: 'LinkedIn', icon: '💼', color: 'border-[#0a66c2] bg-[#0a66c2]/10 text-[#0a66c2]' },
+  { key: 'instagram', label: 'Instagram', icon: '📸', color: 'border-purple-500 bg-purple-500/10 text-purple-400' },
 ]
 
 const OBJECTIVES: { key: AdObjective; label: string; description: string }[] = [
@@ -28,6 +28,16 @@ const TONES: { key: AdTone; label: string; icon: string }[] = [
   { key: 'provocador', label: 'Provocador', icon: '🔥' },
 ]
 
+function PlatformBadge({ platform }: { platform: string }) {
+  const p = PLATFORMS.find(pl => pl.key === platform)
+  if (!p) return <span className="text-xs text-text-muted">{platform}</span>
+  return (
+    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold font-sans border ${p.color}`}>
+      {p.icon} {p.label}
+    </span>
+  )
+}
+
 export default function LaunchPage() {
   const params = useParams()
   const projectId = params.id as string
@@ -40,6 +50,8 @@ export default function LaunchPage() {
   const [error, setError] = useState<string | null>(null)
   const [results, setResults] = useState<LaunchAd[]>([])
   const [copiedId, setCopiedId] = useState<string | null>(null)
+  const [expandedProfiles, setExpandedProfiles] = useState<Set<string>>(new Set())
+  const [showHistory, setShowHistory] = useState(false)
 
   useEffect(() => {
     const p = getProject(projectId)
@@ -52,6 +64,15 @@ export default function LaunchPage() {
         ? prev.filter(p => p !== platform)
         : [...prev, platform]
     )
+  }
+
+  const toggleProfile = (adId: string) => {
+    setExpandedProfiles(prev => {
+      const next = new Set(prev)
+      if (next.has(adId)) next.delete(adId)
+      else next.add(adId)
+      return next
+    })
   }
 
   const generateAds = async () => {
@@ -86,14 +107,16 @@ export default function LaunchPage() {
         platform: ad.platform as AdPlatform,
         objective,
         tone,
-        headline: ad.headline as string,
-        copy: ad.copy as string,
-        cta: ad.cta as string,
+        headline: (ad.headline as string) || '',
+        copy: (ad.copy as string) || '',
+        cta: (ad.cta as string) || '',
         hashtags: (ad.hashtags as string[]) || [],
+        psychProfile: (ad.psychProfile as string) || '',
         createdAt: now,
       }))
 
       setResults(ads)
+      setExpandedProfiles(new Set(ads.map(a => a.id)))
 
       const existingLaunches = project.launches || []
       const updated = { ...project, launches: [...existingLaunches, ...ads] }
@@ -113,14 +136,6 @@ export default function LaunchPage() {
     setTimeout(() => setCopiedId(null), 2000)
   }
 
-  const platformIcon = (platform: string) => {
-    return PLATFORMS.find(p => p.key === platform)?.icon || '📢'
-  }
-
-  const platformLabel = (platform: string) => {
-    return PLATFORMS.find(p => p.key === platform)?.label || platform
-  }
-
   const previousLaunches = (project?.launches || []).filter(
     l => !results.find(r => r.id === l.id)
   )
@@ -133,17 +148,33 @@ export default function LaunchPage() {
     )
   }
 
+  const hasProductContext = !!project.brandContext?.productContext
+
   return (
     <div className="space-y-12">
       <div>
         <h1 className="font-serif text-2xl md:text-3xl text-text mb-1 md:mb-2">Launch</h1>
         <p className="text-text-secondary text-sm md:text-base font-sans">
-          Genera anuncios listos para publicar en redes sociales
+          Genera anuncios con neurocopywriting avanzado, listos para publicar
         </p>
       </div>
 
+      {/* Warning: no product context */}
+      {!hasProductContext && (
+        <Card className="border-amber/30 bg-amber/5 animate-fade-up">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+            <p className="text-amber text-sm font-sans flex-1">
+              No tienes contexto de marca configurado. Los anuncios serán genéricos.
+            </p>
+            <Link href="/">
+              <Button variant="secondary" size="sm">Completar en Inicio</Button>
+            </Link>
+          </div>
+        </Card>
+      )}
+
       {/* Brand context summary */}
-      {(project.brandContext?.productContext || project.sector) && (
+      {hasProductContext && (
         <Card className="animate-fade-up">
           <div className="flex items-center gap-2 mb-2">
             <span className="text-sm">🏷️</span>
@@ -151,17 +182,15 @@ export default function LaunchPage() {
           </div>
           <p className="text-text-muted text-xs font-sans">
             <span className="text-amber">{project.sector}</span>
-            {project.brandContext?.productContext && (
-              <> — {project.brandContext.productContext.slice(0, 120)}
-                {project.brandContext.productContext.length > 120 ? '...' : ''}
-              </>
-            )}
+            {' — '}
+            {project.brandContext.productContext.slice(0, 150)}
+            {project.brandContext.productContext.length > 150 ? '...' : ''}
           </p>
         </Card>
       )}
 
       {/* Configuration */}
-      <section className="space-y-8 animate-fade-up">
+      <section className="space-y-8 animate-fade-up stagger-2">
         {/* Platforms */}
         <div>
           <h2 className="section-title mb-4">Plataformas</h2>
@@ -176,8 +205,8 @@ export default function LaunchPage() {
                     flex items-center gap-2 px-5 py-3 rounded-xl font-sans text-sm font-medium
                     transition-all duration-200 border-2
                     ${selected
-                      ? 'border-amber bg-amber/10 text-amber'
-                      : 'border-border bg-transparent text-text-muted hover:border-border hover:text-text-secondary'
+                      ? p.color
+                      : 'border-border bg-transparent text-text-muted hover:text-text-secondary'
                     }
                   `}
                 >
@@ -227,7 +256,7 @@ export default function LaunchPage() {
                   transition-all duration-200 border-2
                   ${tone === t.key
                     ? 'border-amber bg-amber/10 text-amber'
-                    : 'border-border bg-transparent text-text-muted hover:border-border hover:text-text-secondary'
+                    : 'border-border bg-transparent text-text-muted hover:text-text-secondary'
                   }
                 `}
               >
@@ -246,7 +275,7 @@ export default function LaunchPage() {
           disabled={selectedPlatforms.length === 0}
           className="w-full sm:w-auto"
         >
-          Generar Anuncios ({selectedPlatforms.length} plataforma{selectedPlatforms.length !== 1 ? 's' : ''})
+          Generar Anuncios con IA ({selectedPlatforms.length} plataforma{selectedPlatforms.length !== 1 ? 's' : ''})
         </Button>
       </section>
 
@@ -259,22 +288,19 @@ export default function LaunchPage() {
       {loading && (
         <div className="flex flex-col items-center justify-center py-20 gap-4">
           <div className="w-8 h-8 border-2 border-amber/30 border-t-amber rounded-full animate-spin" />
-          <p className="text-text-secondary text-sm font-sans">Generando anuncios...</p>
+          <p className="text-text-secondary text-sm font-sans">Aplicando neurocopywriting...</p>
         </div>
       )}
 
       {/* Results */}
       {results.length > 0 && !loading && (
-        <section className="space-y-6 animate-fade-up">
+        <section className="space-y-6 animate-fade-up stagger-3">
           <h2 className="section-title">Anuncios generados</h2>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="space-y-6">
             {results.map(ad => (
               <Card key={ad.id} className="flex flex-col gap-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg">{platformIcon(ad.platform)}</span>
-                    <Badge variant="amber">{platformLabel(ad.platform)}</Badge>
-                  </div>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <PlatformBadge platform={ad.platform} />
                   <Button
                     variant="secondary"
                     size="sm"
@@ -284,7 +310,31 @@ export default function LaunchPage() {
                   </Button>
                 </div>
 
-                <div className="space-y-3">
+                {/* Psych Profile - collapsible */}
+                {ad.psychProfile && (
+                  <div className="border border-border rounded-lg overflow-hidden">
+                    <button
+                      onClick={() => toggleProfile(ad.id)}
+                      className="w-full flex items-center justify-between px-4 py-2.5 text-left hover:bg-white/[0.02] transition-colors"
+                    >
+                      <span className="text-[10px] uppercase tracking-wider text-text-muted font-sans">
+                        🧠 Perfil Psicológico del Prospecto
+                      </span>
+                      <span className="text-text-muted text-xs">
+                        {expandedProfiles.has(ad.id) ? '▲' : '▼'}
+                      </span>
+                    </button>
+                    {expandedProfiles.has(ad.id) && (
+                      <div className="px-4 pb-3 border-t border-border">
+                        <p className="text-text-secondary text-xs font-sans leading-relaxed pt-3">
+                          {ad.psychProfile}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <div className="space-y-4">
                   <div>
                     <p className="text-[10px] uppercase tracking-wider text-text-muted mb-1 font-sans">Headline</p>
                     <p className="text-text font-serif text-lg">{ad.headline}</p>
@@ -292,14 +342,16 @@ export default function LaunchPage() {
 
                   <div>
                     <p className="text-[10px] uppercase tracking-wider text-text-muted mb-1 font-sans">Copy</p>
-                    <div className="post-preview bg-white/[0.02] rounded-lg p-4 border border-border text-sm text-text-secondary font-sans whitespace-pre-line">
+                    <div className="post-preview bg-white/[0.02] rounded-lg p-4 border border-border text-sm text-text-secondary font-sans whitespace-pre-line leading-relaxed">
                       {ad.copy}
                     </div>
                   </div>
 
                   <div>
                     <p className="text-[10px] uppercase tracking-wider text-text-muted mb-1 font-sans">CTA</p>
-                    <p className="text-amber font-semibold font-sans">{ad.cta}</p>
+                    <span className="inline-block px-4 py-2 rounded-lg bg-amber/10 border border-amber/30 text-amber font-semibold font-sans text-sm">
+                      {ad.cta}
+                    </span>
                   </div>
 
                   <div className="flex flex-wrap gap-1.5">
@@ -314,30 +366,37 @@ export default function LaunchPage() {
         </section>
       )}
 
-      {/* Previous launches */}
+      {/* Previous launches - collapsible */}
       {previousLaunches.length > 0 && (
-        <section className="space-y-6 animate-fade-up">
-          <h2 className="section-title">Historial de anuncios</h2>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {previousLaunches.map(ad => (
-              <Card key={ad.id} className="flex flex-col gap-3 opacity-70">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span>{platformIcon(ad.platform)}</span>
-                    <Badge variant="amber">{platformLabel(ad.platform)}</Badge>
-                    <span className="text-[10px] text-text-muted font-mono">
-                      {new Date(ad.createdAt).toLocaleDateString('es-ES')}
-                    </span>
+        <section className="animate-fade-up">
+          <button
+            onClick={() => setShowHistory(!showHistory)}
+            className="section-title flex items-center gap-2 mb-6 hover:text-amber transition-colors"
+          >
+            Historial ({previousLaunches.length})
+            <span className="text-xs text-text-muted">{showHistory ? '▲' : '▼'}</span>
+          </button>
+          {showHistory && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {previousLaunches.map(ad => (
+                <Card key={ad.id} className="flex flex-col gap-3 opacity-70 hover:opacity-100 transition-opacity">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <PlatformBadge platform={ad.platform} />
+                      <span className="text-[10px] text-text-muted font-mono">
+                        {new Date(ad.createdAt).toLocaleDateString('es-ES')}
+                      </span>
+                    </div>
+                    <Button variant="secondary" size="sm" onClick={() => copyAd(ad)}>
+                      {copiedId === ad.id ? 'Copiado' : 'Copiar'}
+                    </Button>
                   </div>
-                  <Button variant="secondary" size="sm" onClick={() => copyAd(ad)}>
-                    {copiedId === ad.id ? 'Copiado' : 'Copiar'}
-                  </Button>
-                </div>
-                <p className="text-text font-serif">{ad.headline}</p>
-                <p className="text-text-muted text-xs font-sans line-clamp-2">{ad.copy}</p>
-              </Card>
-            ))}
-          </div>
+                  <p className="text-text font-serif">{ad.headline}</p>
+                  <p className="text-text-muted text-xs font-sans line-clamp-2">{ad.copy}</p>
+                </Card>
+              ))}
+            </div>
+          )}
         </section>
       )}
 

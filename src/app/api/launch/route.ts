@@ -2,53 +2,60 @@ import { generateText } from 'ai'
 import { mainModel } from '@/lib/ai'
 import { AdPlatform } from '@/types'
 
-const PLATFORM_SPECS: Record<AdPlatform, string> = {
+const SYSTEM_PROMPT = `Actúa como un experto mundial en Neurocopywriting, Psicología del Consumidor, Neuromarketing y Economía del Comportamiento. Tu objetivo es crear un texto altamente persuasivo que logre conversiones apelando a la mente inconsciente y racional del cliente ideal.
+
+Aplica la metodología de las "3 E" (Entender, Escribir, Editar):
+
+PASO 1 — ENTENDER (Análisis Profundo):
+- Nivel de Conciencia (Eugene Schwartz): determina si el prospecto es frío (inconsciente del problema), tibio (conoce la solución) o caliente (conoce el producto). Adapta el enfoque en consecuencia.
+- Sistemas de Pensamiento (Kahneman): define qué estímulos activan el Sistema 1 (cerebro rápido, emocional, automático) para captar atención instantánea, y qué datos/garantías activan el Sistema 2 (lógico, analítico) para justificar la decisión.
+
+PASO 2 — ESCRIBIR (Ingeniería Persuasiva):
+- Neuromarketing Triuno: apela al cerebro reptiliano (urgencia, estatus, supervivencia), sistema límbico (historias, empatía) y corteza prefrontal (datos que derriban objeciones).
+- 6 Principios de Cialdini: integra naturalmente Reciprocidad, Coherencia, Prueba Social, Simpatía, Escasez/Urgencia y Autoridad.
+- Sesgos Cognitivos: usa Efecto Framing (carencias como oportunidades), Aversión a la Pérdida (FOMO), Sesgo de Anclaje (valor percibido vs precio).
+- PNL y Power Words: lenguaje multisensorial (visual, auditivo, kinestésico). Palabras de poder: "gratis", "libertad", "exclusivo", "ahorro", "garantizado".
+- Storytelling: contexto → desafío → solución → resultado transformador.
+
+PASO 3 — FLUIDEZ COGNITIVA:
+- Textos escaneables: bullets, jerarquía visual clara, sin complejidad innecesaria.
+- Lenguaje conversacional, nunca técnico en exceso.
+- Sin promesas exageradas, cumple políticas de publicidad.
+- CTA final claro, concreto y con urgencia.
+
+Responde ÚNICAMENTE en formato JSON válido, sin backticks ni explicaciones:
+{
+  "psychProfile": "resumen en 2-3 líneas del análisis PASO 1",
+  "headline": "titular principal impactante",
+  "copy": "copy completo listo para publicar",
+  "cta": "texto del botón/llamada a la acción",
+  "hashtags": ["hashtag1", "hashtag2"]
+}`
+
+const PLATFORM_PROMPTS: Record<AdPlatform, string> = {
   facebook: `Plataforma: Facebook Ads
-- Hook emocional en la primera línea
-- Copy de 200-300 palabras
-- Emojis moderados (3-5 máximo)
-- 6-8 hashtags relevantes
-- CTA directo con urgencia sutil`,
+Formato: Hook emocional en la primera línea, 200-300 palabras, emojis estratégicos (no más de 6), 6-8 hashtags en español relevantes al sector LATAM.
+El copy debe sentirse nativo de Facebook, no como un anuncio corporativo.`,
 
-  linkedin: `Plataforma: LinkedIn Ads
-- Primera línea como gancho profesional
-- Estructura: problema → solución → CTA
-- Copy de 150-200 palabras
-- Tono B2B profesional
-- 4-5 hashtags profesionales
-- CTA orientado a valor`,
+  linkedin: `Plataforma: LinkedIn
+Formato: Primera línea es el gancho (se corta antes del 'ver más'), estructura Problema → Agitación → Solución → Prueba Social → CTA, 150-200 palabras, saltos de línea frecuentes para mobile, 4-5 hashtags profesionales de nicho.`,
 
-  instagram: `Plataforma: Instagram Ads
-- Caption visual y atractivo
-- Emojis rítmicos integrados en el texto
-- Copy de 100-150 palabras
-- 15-20 hashtags mixtos (nicho + populares)
-- CTA conversacional`,
+  instagram: `Plataforma: Instagram
+Formato: Caption visual e impactante, emojis con ritmo visual, máximo 150 palabras en el cuerpo, línea separadora antes de hashtags, 15-20 hashtags mezclando nicho específico + industria + audiencia LATAM.`,
 }
 
-const SYSTEM_PROMPT = `Eres un experto en copywriting publicitario digital. Generas anuncios listos para publicar.
+const OBJECTIVE_MAP: Record<string, string> = {
+  awareness: 'Awareness — Dar a conocer la marca/producto',
+  conversion: 'Conversión — Generar ventas, registros o demos',
+  retargeting: 'Retargeting — Re-enganchar usuarios que ya conocen la marca',
+}
 
-REGLAS:
-- Cada anuncio debe tener: headline, copy, cta, hashtags
-- El headline debe ser corto y magnético (máximo 10 palabras)
-- El copy debe seguir las especificaciones de cada plataforma
-- El CTA debe ser una frase de acción clara
-- Los hashtags deben ser relevantes al sector y plataforma
-- NUNCA inventes datos o estadísticas falsas
-- Adapta el tono según lo solicitado
-
-Responde SOLO con JSON válido, sin markdown, sin backticks:
-{
-  "ads": [
-    {
-      "platform": "facebook|linkedin|instagram",
-      "headline": "...",
-      "copy": "...",
-      "cta": "...",
-      "hashtags": ["#tag1", "#tag2"]
-    }
-  ]
-}`
+const TONE_MAP: Record<string, string> = {
+  profesional: 'Profesional y confiable',
+  urgente: 'Urgente y escaso (FOMO)',
+  storytelling: 'Narrativo y emocional',
+  provocador: 'Provocador e inesperado',
+}
 
 export async function POST(req: Request) {
   try {
@@ -58,53 +65,32 @@ export async function POST(req: Request) {
       return Response.json({ error: 'Sector y plataformas son requeridos' }, { status: 400 })
     }
 
-    const platformSpecs = platforms
-      .map((p: AdPlatform) => PLATFORM_SPECS[p])
-      .join('\n\n---\n\n')
+    const adPromises = (platforms as AdPlatform[]).map(async (platform) => {
+      const prompt = `Producto/Servicio: ${productContext || sector}
+Sector: ${sector}
+Temas clave: ${specificTopics || 'General del sector'}
+Objetivo del anuncio: ${OBJECTIVE_MAP[objective] || objective}
+Tono: ${TONE_MAP[tone] || tone}
+${PLATFORM_PROMPTS[platform]}`
 
-    const objectiveMap: Record<string, string> = {
-      awareness: 'Dar a conocer la marca/producto. Enfoque en despertar curiosidad y reconocimiento.',
-      conversion: 'Generar conversiones directas (compras, registros, demos). Enfoque en beneficios claros y urgencia.',
-      retargeting: 'Re-enganchar usuarios que ya conocen la marca. Enfoque en recordatorio, prueba social y oferta.',
-    }
+      const { text } = await generateText({
+        model: mainModel,
+        system: SYSTEM_PROMPT,
+        prompt,
+        temperature: 0.8,
+      })
 
-    const toneMap: Record<string, string> = {
-      profesional: 'Profesional y confiable. Datos, autoridad, lenguaje corporativo accesible.',
-      urgente: 'Urgente y escaso. FOMO, plazos, disponibilidad limitada.',
-      storytelling: 'Narrativo y emocional. Historia personal, transformación, conexión humana.',
-      provocador: 'Provocador e inesperado. Romper esquemas, cuestionar lo establecido, generar debate.',
-    }
+      const jsonMatch = text.match(/\{[\s\S]*\}/)
+      if (!jsonMatch) {
+        throw new Error(`No se pudo parsear la respuesta para ${platform}`)
+      }
 
-    let prompt = `Sector: "${sector}"
-Objetivo: ${objectiveMap[objective] || objective}
-Tono: ${toneMap[tone] || tone}
-
-ESPECIFICACIONES POR PLATAFORMA:
-${platformSpecs}`
-
-    if (productContext) {
-      prompt += `\n\nCONTEXTO DE MARCA:\n${productContext}`
-    }
-    if (specificTopics) {
-      prompt += `\n\nTEMAS ESPECÍFICOS:\n${specificTopics}`
-    }
-
-    prompt += `\n\nGenera un anuncio optimizado para CADA plataforma solicitada (${platforms.join(', ')}).`
-
-    const { text } = await generateText({
-      model: mainModel,
-      system: SYSTEM_PROMPT,
-      prompt,
-      temperature: 0.8,
+      const parsed = JSON.parse(jsonMatch[0])
+      return { platform, ...parsed }
     })
 
-    const jsonMatch = text.match(/\{[\s\S]*\}/)
-    if (!jsonMatch) {
-      return Response.json({ error: 'No se pudo parsear la respuesta' }, { status: 500 })
-    }
-
-    const data = JSON.parse(jsonMatch[0])
-    return Response.json(data)
+    const ads = await Promise.all(adPromises)
+    return Response.json({ ads })
   } catch (error: unknown) {
     console.error('Launch API error:', error)
     const message = error instanceof Error ? error.message : 'Error al generar anuncios'
