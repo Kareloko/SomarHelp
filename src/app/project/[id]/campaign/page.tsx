@@ -33,6 +33,9 @@ export default function CampaignPage() {
     setError(null)
 
     try {
+      // Collect previously used topics for anti-repetition
+      const usedTopics = project.posts.map(p => p.hook).filter(Boolean)
+
       const res = await fetch('/api/campaign', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -41,6 +44,7 @@ export default function CampaignPage() {
           research: project.research,
           posts: project.posts,
           productContext: project.brandContext?.productContext || '',
+          usedTopics,
         }),
       })
 
@@ -60,8 +64,8 @@ export default function CampaignPage() {
       const updated = { ...project, campaign: campaignData }
       saveProject(updated)
       setProject(updated)
-    } catch (err: any) {
-      setError(err.message)
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Error desconocido')
     } finally {
       setLoading(false)
     }
@@ -86,7 +90,7 @@ export default function CampaignPage() {
       if (!res.ok) throw new Error('Error al generar post')
 
       const data = await res.json()
-      const matchingPost = data.posts.find((p: any) => p.style === day.style) || data.posts[0]
+      const matchingPost = data.posts.find((p: Record<string, unknown>) => p.style === day.style) || data.posts[0]
 
       const generatedPost: GeneratedPost = {
         id: nanoid(10),
@@ -111,11 +115,45 @@ export default function CampaignPage() {
       }
       saveProject(updated)
       setProject(updated)
-    } catch (err: any) {
-      setError(err.message)
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Error desconocido')
     } finally {
       setLoadingDay(null)
     }
+  }
+
+  const handleDeleteDay = (index: number) => {
+    if (!project || !campaign) return
+
+    const day = campaign.days[index]
+    const updatedDays = campaign.days.filter((_, i) => i !== index)
+    const updatedCampaign = { ...campaign, days: updatedDays }
+
+    // Remove associated post from project.posts if it exists
+    let updatedPosts = project.posts
+    if (day.post) {
+      updatedPosts = project.posts.filter(p => p.id !== day.post!.id)
+    }
+
+    setCampaign(updatedDays.length > 0 ? updatedCampaign : null)
+    const updated = {
+      ...project,
+      campaign: updatedDays.length > 0 ? updatedCampaign : null,
+      posts: updatedPosts,
+    }
+    saveProject(updated)
+    setProject(updated)
+  }
+
+  const handleReorder = (reorderedDays: CampaignDay[]) => {
+    if (!project || !campaign) return
+
+    const updatedCampaign = { ...campaign, days: reorderedDays }
+    setCampaign(updatedCampaign)
+
+    const updated = { ...project, campaign: updatedCampaign }
+    saveProject(updated)
+    setProject(updated)
   }
 
   return (
@@ -156,6 +194,8 @@ export default function CampaignPage() {
           <CampaignCalendar
             days={campaign.days}
             onGeneratePost={generateDayPost}
+            onDeleteDay={handleDeleteDay}
+            onReorder={handleReorder}
             loadingDay={loadingDay}
           />
 
